@@ -303,6 +303,7 @@ uint8_t byteMap(uint8_t x)
 }
 
 
+
 bool digitalRead(uint8_t pin)
 {
   GPIO_PinState dx = GPIO_PIN_RESET;
@@ -365,7 +366,68 @@ void digitalWrite(uint8_t pinz, bool statx)
 
 
 
+void sendState()
+{
+  uint8_t r1,r2,r3,r4;
+  if(sw1 == true)
+  {
+    r1 = 0x01;
+  }
+  else
+  {
+    r1 = 0x00;
+  }
 
+  if(sw2 == true)
+  {
+    r2 = 0x01;
+  }
+  else
+  {
+    r2 = 0x00;
+  }
+
+  if(sw3 == true)
+  {
+    r3 = 0x01;
+  }
+  else
+  {
+    r3 = 0x00;
+  }
+
+  if(sw4 == true)
+  {
+    r4 = 0x01;
+  }
+  else
+  {
+    r4 = 0x00;
+  }
+
+
+  uint8_t def[12] = {0xCC,0xAA,0xCC,0xAA,0xF0,r1,r2,r3,r4,0x00,0x00,0x00};
+  uint8_t cdc = 0x00;
+  for(int l=0;l<11;l++)
+  {
+    cdc ^= def[l];
+  }
+  def[11] = cdc;
+  HAL_UART_Transmit(&huart1, def, 12,10);
+}
+
+
+void sendRGB()
+{
+  uint8_t dede[12] = {0xCC,0xAA,0xCC,0xAA,0xF2,onColor[0],onColor[1],onColor[2],offColor[0],offColor[1],offColor[2],0x00};
+  uint8_t cdc = 0x00;
+  for(int l=0;l<11;l++)
+  {
+    cdc ^= dede[l];
+  }
+  dede[11] = cdc;
+  HAL_UART_Transmit(&huart1, dede, 12,10);
+}
 
 void processSwitch()
 {
@@ -481,7 +543,7 @@ HAL_Delay(delval);
       RGB(j,0,0,i);
     }
     HAL_Delay(delval);
-  }
+  }sendState();
 
 }
 //----------------------------------------------------------------------------
@@ -500,29 +562,33 @@ void processInputs()
     {
       sw1 = true;
       t1 = true;
+      sendState();
     }
     else if((t1==false)&&(sw1==true))
     {
       sw1 = false;
       t1 = true;
+      sendState();
     }
   }
   else
   {
     t1 = false;
   }
-  //----------------------------------------H2----------------------------------
+  //----------------------------------------H2----------------------------------sendState();
   if(s2 == true)
   {
     if((t2==false)&&(sw2==false))
     {
       sw2 = true;
       t2 = true;
+      sendState();
     }
     else if((t2==false)&&(sw2==true))
     {
       sw2 = false;
       t2 = true;
+      sendState();
     }
   }
   else
@@ -536,11 +602,13 @@ void processInputs()
     {
       sw3 = true;
       t3 = true;
+      sendState();
     }
     else if((t3==false)&&(sw3==true))
     {
       sw3 = false;
       t3 = true;
+      sendState();
     }
   }
   else
@@ -554,11 +622,13 @@ void processInputs()
     {
       sw4 = true;
       t4 = true;
+      sendState();
     }
     else if((t4==false)&&(sw4==true))
     {
       sw4 = false;
       t4 = true;
+      sendState();
     }
   }
   else
@@ -658,6 +728,15 @@ if(inBuff[4]==0x03)
   offColor[0] = inBuff[5];
   offColor[1] = inBuff[6];
   offColor[2] = inBuff[7];
+}
+
+else if(inBuff[4] == 0x04)
+{
+  sendState();
+}
+else if(inBuff[5] == 0x05)
+{
+  sendRGB();
 }
 
   }
